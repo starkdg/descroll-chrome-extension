@@ -1,0 +1,24 @@
+{
+  "name": "descroll-chrome-extension",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "test": "vitest --run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "dompurify": "^3.3.3"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^14.0.0",
+    "jsdom": "^29.0.2",
+    "vitest": "^4.1.4",
+    "webpack": "^5.106.1",
+    "webpack-cli": "^7.0.2"
+  }
+}

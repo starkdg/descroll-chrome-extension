@@ -1,0 +1,56 @@
+:root {
+    /* 1. DEFAULT (Dark) */
+    --bg-color: #0d1117;
+    --text-color: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent-color: #58a6ff;
+    --overlay-bg: rgba(0, 0, 0, 0.9);
+    --card-bg: #161b22;
+    --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.1); /* Very subtle flat design */
+    --border-radius: 6px;
+    --font-main: 'Inter', -apple-system, sans-serif;
+    --gradient-start: #c9d1d9; 
+    --gradient-end: #8b949e;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        /* 2. SYSTEM LIGHT FALLBACK */
+        --bg-color: #ffffff;
+        --text-color: #1f2328;
+        --text-muted: #656d76;
+        --accent-color: #0969da;
+        --overlay-bg: rgba(255, 255, 255, 0.95);
+        --card-bg: #ffffff;
+        --card-shadow: 0 1px 3px rgba(31, 35, 40, 0.08);
+        --gradient-start: #1f2328; 
+        --gradient-end: #656d76;
+    }
+}
+
+[data-theme="light"] {
+    /* 3. MANUAL LIGHT OVERRIDE */
+    --bg-color: #ffffff;
+    --text-color: #1f2328;
+    --text-muted: #656d76;
+    --accent-color: #0969da;
+    --overlay-bg: rgba(255, 255, 255, 0.95);
+    --card-bg: #ffffff;
+    --card-shadow: 0 1px 3px rgba(31, 35, 40, 0.08);
+    --gradient-start: #1f2328; 
+    --gradient-end: #656d76;
+}
+
+[data-theme="dark"] {
+    /* 4. MANUAL DARK OVERRIDE */
+    --bg-color: #0d1117;
+    --text-color: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent-color: #58a6ff;
+    --overlay-bg: rgba(0, 0, 0, 0.9);
+    --card-bg: #161b22;
+    --card-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+    --border-radius: 6px;
+    --gradient-start: #c9d1d9; 
+    --gradient-end: #8b949e;
+}

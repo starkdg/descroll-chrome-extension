@@ -1,0 +1,46 @@
+{
+    "manifest_version": 3,
+    "name": "DeScroll",
+    "short_name": "DeScroll",
+    "version": "0.1.0",
+    "minimum_chrome_version": "105",
+    "description": "Reclaim your news feed with content sourced from your own bookmarks",
+    "permissions": [
+	"bookmarks",
+	"favicon",
+	"storage"
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self';"
+    },
+    "optional_host_permissions": [
+	"<all_urls>",
+	"https://extensionpay.com/*"
+    ],
+    "background": {
+	"service_worker": "src/background.js",
+	"type": "module"
+    },
+    "chrome_url_overrides": {
+	"newtab": "src/newtab.html"
+    },
+    "options_ui": {
+	"page": "src/options.html",
+	"open_in_tab": true
+    },
+    "icons": {
+	"16": "icons/icon-16.png",
+	"32": "icons/icon-32.png",
+	"48": "icons/icon-48.png",
+	"128": "icons/icon-128.png"
+    },
+    "action": {
+	"default_title": "DeScroll",
+	"default_icon": {
+	    "16": "icons/icon-16.png",
+	    "32": "icons/icon-32.png",
+	    "48": "icons/icon-48.png",
+	    "128": "icons/icon-128.png"
+	}
+    }
+}

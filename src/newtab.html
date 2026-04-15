@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeScroll</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+    <link rel="shortcut icon" href="/icons/icon-32.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="options.html" class="nav-link">Settings</a>
+    </nav>
+    <div id="onboarding-container" class="onboarding-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+        <div class="onboarding-content">
+            <h1 id="onboarding-title">Welcome to DeScroll</h1>
+            <p>Reclaim your news feed with content sourced from your own bookmarks.</p>
+            <div class="onboarding-step">
+                <p>To get started, tell us which bookmark folder contains your favorite sources:</p>
+                <div class="folder-selector-wrapper">
+                    <input type="text" id="onboarding-folder" placeholder="Folder Name (e.g., MyFeed)" value="MyFeed">
+                    <div id="onboarding-error" class="error-msg" style="display: none;"></div>
+                </div>
+                <p class="onboarding-note">DeScroll will look for RSS feeds and sitemaps on the domains you've bookmarked in this folder.</p>
+            </div>
+            <button id="start-onboarding" class="primary-btn">Start My Feed</button>
+        </div>
+    </div>
+    <div id="app">
+        <header>
+            <h1>DeScroll</h1>
+            <p class="subtitle">Curated from your own interests.</p>
+        </header>
+        
+        <main id="feed-container">
+            <!-- Bookmark and Discovery cards will be injected here -->
+        </main>
+
+        <div id="sentinel">
+            <div class="loader"></div>
+        </div>
+
+        <footer>
+            <a href="test-discovery.html" class="dev-link">Discovery Tester</a>
+        </footer>
+    </div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

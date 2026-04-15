@@ -1,0 +1,50 @@
+:root {
+    --bg-color: #06120e;
+    --text-color: #e2e8f0;
+    --text-muted: #64748b;
+    --accent-color: #10b981;
+    --overlay-bg: rgba(0, 0, 0, 0.8);
+    --card-bg: #0f1c18;
+    --card-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    --border-radius: 12px;
+    --gradient-start: #10b981; 
+    --gradient-end: #059669;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-color: #f0fdf4;
+        --text-color: #064e3b;
+        --text-muted: #059669;
+        --accent-color: #10b981;
+        --overlay-bg: rgba(255, 255, 255, 0.9);
+        --card-bg: #ffffff;
+        --card-shadow: 0 4px 12px rgba(6, 78, 59, 0.05);
+        --gradient-start: #059669; 
+        --gradient-end: #064e3b;
+    }
+}
+
+[data-theme="light"] {
+    --bg-color: #f0fdf4;
+    --text-color: #064e3b;
+    --text-muted: #059669;
+    --accent-color: #10b981;
+    --overlay-bg: rgba(255, 255, 255, 0.9);
+    --card-bg: #ffffff;
+    --card-shadow: 0 4px 12px rgba(6, 78, 59, 0.05);
+    --gradient-start: #059669; 
+    --gradient-end: #064e3b;
+}
+
+[data-theme="dark"] {
+    --bg-color: #06120e;
+    --text-color: #e2e8f0;
+    --text-muted: #64748b;
+    --accent-color: #10b981;
+    --overlay-bg: rgba(0, 0, 0, 0.8);
+    --card-bg: #0f1c18;
+    --card-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    --gradient-start: #10b981; 
+    --gradient-end: #059669;
+}

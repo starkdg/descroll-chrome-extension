@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeScroll Settings</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+    <link rel="shortcut icon" href="/icons/icon-32.png">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            justify-content: center;
+            padding: 2rem;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        .settings-container {
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .setting-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+        .help-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .pro-badge {
+            background-color: #f1c40f;
+            color: #2c3e50;
+        }
+        .subscription-group {
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            padding-top: 1.5rem;
+            margin-top: 2rem;
+        }
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+        .primary {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .secondary {
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <h1>Feed Settings</h1>
+        
+        <div class="setting-group">
+            <label for="domainCount">Number of sources per refresh</label>
+            <input type="number" id="domainCount" min="1">
+            <p class="help-text">How many different websites to pull new content from each time you open a tab.</p>
+        </div>
+
+        <div class="setting-group">
+            <label for="itemsPerDomain">Items per source</label>
+            <input type="number" id="itemsPerDomain" min="1">
+            <p class="help-text">How many recent articles to pull from each of those websites.</p>
+        </div>
+
+        <div class="setting-group">
+            <label for="folderName">Bookmark folder name</label>
+            <input type="text" id="folderName" placeholder="MyFeed">
+            <p class="help-text">The name of the bookmark folder containing the sites you want to follow.</p>
+        </div>
+
+        <div class="setting-group">
+            <label for="windowDays">Rolling seen window (days)</label>
+            <input type="number" id="windowDays" min="1" max="365">
+            <p class="help-text">How long to wait before showing the same link again. (Default: 7 days)</p>
+        </div>
+
+        <div class="setting-group">
+            <label>
+                <input type="checkbox" id="enableTelemetry" checked> 
+                Enable Telemetry
+            </label>
+            <p class="help-text">Help improve DeScroll by sending anonymous usage data.</p>
+        </div>
+
+        <div class="setting-group">
+            <label>
+                <input type="checkbox" id="deepScan"> 
+                Deep Scan Discovery
+            </label>
+            <p class="help-text">Crawls sub-pages to find hidden RSS feeds.</p>
+        </div>
+
+        <div class="setting-group">
+            <label for="theme">Theme</label>
+            <select id="theme">
+                <option value="system">System (Auto)</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+            </select>
+            <p class="help-text">Choose the color theme for the extension.</p>
+        </div>
+
+        <button id="save" class="primary">Save Settings</button>
+        <div id="status"></div>
+
+        <div class="subscription-group" style="display:none;">
+            <h3>Subscription</h3>
+            <div id="subscriptionStatus" class="help-text">Checking status...</div>
+            <div class="button-row">
+                <button id="upgradeBtn" class="primary">Upgrade to Pro</button>
+                <button id="manageBtn" class="secondary" style="display:none;">Manage Subscription</button>
+            </div>
+        </div>
+
+        <div class="setting-group" style="margin-top: 1.5rem; display:none;">
+            <h3>Tools</h3>
+            <button id="exportOpml" class="secondary">Export to OPML</button>
+        </div>
+    </div>
+
+    <div class="settings-container" style="margin-top: 2rem;">
+        <h2>Diagnostic Tool</h2>
+        <p class="help-text">Enter a URL to test if it contains discoverable feeds.</p>
+        <div class="setting-group">
+            <input type="text" id="urlInput" placeholder="https://example.com">
+            <button id="testBtn" class="primary" style="margin-top: 0.5rem;">Discover</button>
+        </div>
+        <div id="output" class="help-text"></div>
+
+        <h3 style="margin-top: 2rem;">Diagnostic Log</h3>
+        <p class="help-text">Recent system events and errors (last 50).</p>
+        <div id="log-display" class="log-container">
+            No logs recorded yet.
+        </div>
+        <button id="clearLogsBtn" class="secondary" style="margin-top: 1rem;">Clear Logs</button>
+    </div>
+
+    <script src="options.js" type="module"></script>
+</body>
+</html>
