@@ -1,15 +1,17 @@
 {
   "name": "descroll-chrome-extension",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "webpack",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "clean": "rm -rf dist releases/*.zip descroll-extension-*.zip",
+    "package": "npm run clean && npm run build"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-2.0",
   "type": "module",
   "dependencies": {
     "dompurify": "^3.3.3"

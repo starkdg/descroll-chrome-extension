@@ -1,4 +1,15 @@
 /**
+ * Applies a theme to the document.
+ */
+export function applyTheme(theme) {
+    if (theme === 'light' || theme === 'dark') {
+        document.documentElement.setAttribute('data-theme', theme);
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+}
+
+/**
  * View module for DeScroll. Handles all DOM-related operations and UI state.
  */
 export class FeedView {
@@ -10,8 +21,25 @@ export class FeedView {
         this.onboardingError = document.getElementById('onboarding-error');
         this.startOnboardingBtn = document.getElementById('start-onboarding');
         this.folderInput = document.getElementById('onboarding-folder');
+        this.observer = null;
 
-        // Global listener to close menus
+	// card observer to observe when card is in view
+	this.cardObserver = new IntersectionObserver((entries) => {
+	    entries.forEach(entry => {
+		// Callback fires when threshold is crossed. 
+		// isIntersecting ensures we mark it when entering, not leaving.
+		if (entry.isIntersecting) {
+		    const url = entry.target.getAttribute('data-url');
+		    if (this.onMarkSeenCallback) {
+			this.onMarkSeenCallback(url);
+		    }
+		    // Stop observing once it has been marked seen
+		    this.cardObserver.unobserve(entry.target);
+		}
+	    });
+	}, { threshold: 0.9 });
+
+	// Global listener to close menus
         document.addEventListener('click', () => this.closeAllMenus());
     }
 
@@ -36,7 +64,7 @@ export class FeedView {
     /**
      * Renders skeleton cards into the feed container.
      */
-    renderSkeletons(count = 3) {
+    renderSkeletons(count = 5) {
         for (let i = 0; i < count; i++) {
             const skeleton = document.createElement('div');
             skeleton.className = 'skeleton-card';
@@ -89,7 +117,7 @@ export class FeedView {
             cta = 'Try adding different sources or check your folder settings.';
         } else {
             title = 'Your feed is empty.';
-            message = 'We couldn\'t find any content to display.';
+            message = info.message || 'We couldn\'t find any content to display.';
             cta = 'Check your bookmark settings or check back later.';
         }
 
@@ -118,9 +146,14 @@ export class FeedView {
             const originalText = this.startOnboardingBtn.textContent;
             this.startOnboardingBtn.textContent = "Checking your bookmarks...";
 
-            const success = await onStart(folderName);
-            
-            if (!success) {
+            try {
+                const success = await onStart(folderName);
+                if (!success) {
+                    this.startOnboardingBtn.disabled = false;
+                    this.startOnboardingBtn.textContent = originalText;
+                }
+            } catch (err) {
+                this.showOnboardingError(err.message || "An unexpected error occurred.");
                 this.startOnboardingBtn.disabled = false;
                 this.startOnboardingBtn.textContent = originalText;
             }
@@ -139,23 +172,50 @@ export class FeedView {
     }
 
     /**
+     * Displays a small, dismissible hint at the top of the feed.
+     */
+    showFeedHint(message) {
+        const hint = document.createElement('div');
+        hint.className = 'feed-hint';
+        hint.innerHTML = `
+            <span>${message}</span>
+            <button class="close-hint" aria-label="Dismiss hint">×</button>
+        `;
+        
+        hint.querySelector('.close-hint').onclick = () => {
+            hint.style.opacity = '0';
+            hint.style.height = '0';
+            hint.style.margin = '0';
+            hint.style.padding = '0';
+            setTimeout(() => hint.remove(), 300);
+        };
+
+        // Insert at the beginning of the container
+        this.container.prepend(hint);
+    }
+
+    /**
      * Prepares for feed rendering.
      */
-    prepareFeed() {
+    prepareFeed(skeletonCount = 5) {
         this.container.innerHTML = '';
         this.sentinel.style.display = 'flex';
         this.sentinel.innerHTML = '';
-        this.renderSkeletons(3);
+        this.renderSkeletons(skeletonCount);
     }
 
     /**
      * Appends a batch of items to the container.
      */
     appendBatch(items, callbacks) {
+        this.onMarkSeenCallback = callbacks.onMarkSeen;
         items.forEach(item => {
             const card = this.createCard(item, callbacks);
+            card.setAttribute('data-url', item.url); // Attach the URL for identification
             this.container.appendChild(card);
-            if (callbacks.onMarkSeen) callbacks.onMarkSeen(item.url);
+
+            // Observe the card to mark it seen when it comes into view
+            this.cardObserver.observe(card);
         });
     }
 
@@ -220,6 +280,7 @@ export class FeedView {
                     </div>
                     <h3 class="title" id="${titleId}">${item.title}</h3>
                     ${dateHtml}
+                    ${item.snippet ? `<p class="snippet">${item.snippet}</p>` : ''}
                     <span class="badge ${item.type}" aria-label="Content type: ${item.type}">${item.type.toUpperCase()}</span>
                 </div>
             </a>
@@ -246,6 +307,10 @@ export class FeedView {
             };
         }
 
+        card.querySelector('a.card').onclick = () => {
+            if (callbacks.onClick) callbacks.onClick(item);
+        };
+
         // Options menu handling
         const optionsBtn = card.querySelector('.card-options');
         const menu = card.querySelector('.options-menu');
@@ -267,6 +332,7 @@ export class FeedView {
 
         card.querySelector('.delete-bookmark-option').onclick = (e) => {
             e.stopPropagation();
+            this.closeAllMenus();
             if (callbacks.onDeleteBookmark) callbacks.onDeleteBookmark(item);
         };
 
@@ -285,11 +351,13 @@ export class FeedView {
     }
 
     setupInfiniteScroll(onLoadMore) {
-        const observer = new IntersectionObserver((entries) => {
+        if (this.observer) this.observer.disconnect();
+
+        this.observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting) {
                 onLoadMore();
             }
         }, { threshold: 0.1 });
-        observer.observe(this.sentinel);
+        this.observer.observe(this.sentinel);
     }
 }

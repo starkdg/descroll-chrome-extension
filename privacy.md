@@ -1,4 +1,4 @@
-# DeScroll Privacy Policy
+  DeScroll Privacy Policy
 
    1. Data Privacy Commitment
    
@@ -30,10 +30,13 @@
 
    4. Permissions Disclosure
 
-	• Bookmarks: Used to identify the sources you want to follow.
-	• Network Access: Used only to fetch public RSS/Atom feeds from your bookmarked sites and to send anonymous telemetry.
-	• Storage: Used to persist your theme choices, "seen" history, and anonymous client ID locally.
-   
+	• Bookmarks: Used to identify the sources you want to follow.  •
+	Network Access: Used only to fetch public RSS/Atom feeds from your
+	bookmarked sites and to send anonymous telemetry.  
+	• Storage: Used to save user preferences, theme settings, and to
+	track which sites have already been visited to keep from showing
+	repeat content.
+	
    5. Transparency
 
 	DeScroll is open-source. While we use analytics to understand 

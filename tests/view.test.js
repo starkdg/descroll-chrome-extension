@@ -133,6 +133,15 @@ describe('FeedView', () => {
             expect(card.querySelector('a').href).toBe('https://example.com/post');
         });
 
+        it('should trigger onClick callback when the card link is clicked', () => {
+            const onClick = vi.fn();
+            const card = view.createCard(mockItem, { onClick });
+            const link = card.querySelector('a.card');
+            
+            link.click();
+            expect(onClick).toHaveBeenCalledWith(mockItem);
+        });
+
         it('should remove cards by domain with animation delay', async () => {
             vi.useFakeTimers();
             const card1 = view.createCard(mockItem, {});

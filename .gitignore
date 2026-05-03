@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 dist/
+releases/
+*.zip
 
 # Backup and temporary files
 .~/

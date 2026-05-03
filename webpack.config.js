@@ -1,9 +1,14 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import CopyPlugin from 'copy-webpack-plugin';
+import { execSync } from 'child_process';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8'));
+const version = packageJson.version;
 
 export default {
   mode: 'production',
@@ -45,6 +50,19 @@ export default {
         { from: 'icons', to: 'icons' },
       ],
     }),
+    {
+      apply: (compiler) => {
+        compiler.hooks.afterEmit.tap('ZipPlugin', () => {
+          try {
+            console.log('Packaging extension...');
+            execSync(`mkdir -p releases && cd dist && zip -r ../releases/descroll-extension-v${version}.zip ./*`);
+            console.log(`Created releases/descroll-extension-v${version}.zip`);
+          } catch (error) {
+            console.error('Error creating zip package:', error);
+          }
+        });
+      },
+    },
   ],
   resolve: {
     extensions: ['.js'],

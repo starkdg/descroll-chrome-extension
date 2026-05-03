@@ -1,5 +1,7 @@
 # DeScroll Chrome Extension - Internals & Architecture
 
+> **Status:** v1.0.0 Stable Architecture (As submitted for review on 2026-04-29)
+
 DeScroll is a Chrome Extension (Manifest V3) that replaces the
 habit-forming infinite scroll of social media with a "beneficial
 scroll" on the New Tab page. It generates a custom feed by discovering

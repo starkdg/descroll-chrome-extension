@@ -1,4 +1,4 @@
-@import 'themes/minimalist.css';
+@import 'themes/midnight-gold.css';
 
 /* 
   EASY THEME SWAP:
@@ -24,7 +24,13 @@ body {
     max-width: 600px;
     width: 100%;
     padding: 3rem 1.5rem;
-    transition: filter 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+@media (min-width: 1000px) {
+    #app {
+        max-width: 1100px;
+    }
 }
 
 /* Onboarding Overlay */
@@ -86,6 +92,21 @@ body {
     color: #7f8c8d;
     font-style: italic;
     margin-top: 1rem;
+}
+
+.onboarding-hint {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    line-height: 1.4;
+    border-left: 3px solid var(--accent-color);
+}
+
+.onboarding-hint strong {
+    color: var(--text-color);
 }
 
 #onboarding-folder {
@@ -165,14 +186,22 @@ h1 {
 }
 
 #feed-container {
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem; /* More breathing room */
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+}
+
+@media (min-width: 1000px) {
+    #feed-container {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 .card-wrapper {
     position: relative;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
 }
 
 .card {
@@ -183,8 +212,11 @@ h1 {
     border: 1px solid rgba(0,0,0,0.03); /* Extremely subtle border */
     text-decoration: none;
     color: inherit;
-    display: block;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
+    height: 100%;
+    flex: 1;
 }
 
 .card:focus-visible {
@@ -430,6 +462,19 @@ img.fallback-active {
     overflow: hidden;
 }
 
+.snippet {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--text-color);
+    margin: 0.8rem 0 0.2rem 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+    opacity: 0.8;
+}
+
 .date {
     font-size: 0.85rem;
     color: var(--text-muted);
@@ -471,7 +516,8 @@ img.fallback-active {
     overflow: hidden;
     box-shadow: var(--card-shadow);
     border: 1px solid rgba(0,0,0,0.03);
-    margin-bottom: 2.5rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .skeleton-image {
@@ -573,6 +619,7 @@ img.fallback-active {
 
 /* Empty State UI */
 .empty-state {
+    grid-column: 1 / -1;
     text-align: center;
     padding: 4rem 2rem;
     background: white;
@@ -616,27 +663,35 @@ img.fallback-active {
     font-weight: 600;
 }
 
-.empty-state a:hover {
-    text-decoration: underline;
-}
-rem;
+.feed-hint {
+    grid-column: 1 / -1;
+    background: #fdf6e3;
+    border: 1px solid #eee8d5;
+    padding: 1rem;
     border-radius: 8px;
-    font-size: 0.95rem;
-    color: var(--text-color);
-    border: 1px dashed #ddd;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+    color: #657b83;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    overflow: hidden;
 }
 
-.empty-state a {
+.feed-hint strong {
     color: var(--accent-color);
-    text-decoration: none;
-    font-weight: 600;
 }
 
-.empty-state a:hover {
-    text-decoration: underline;
+.feed-hint .close-hint {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #93a1a1;
+    padding: 0 0.5rem;
 }
-over {
-    text-decoration: underline;
-}
-erline;
+
+.feed-hint .close-hint:hover {
+    color: #586e75;
 }

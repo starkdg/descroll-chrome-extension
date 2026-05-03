@@ -235,20 +235,26 @@ export class DiscoveryModule {
             if (rssItems.length > 0) {
                 rssItems.forEach(node => {
                     // Extract image from media:content, enclosure, or description
-                    let imageUrl = node.querySelector('media\\:content, content')?.getAttribute('url') || 
+                    let imageUrl = (node.querySelector('media\\:content, content') || 
+                                   node.getElementsByTagName('media:content')[0] || 
+                                   node.getElementsByTagName('content')[0])?.getAttribute('url') || 
                                    node.querySelector('enclosure[type^="image/"]')?.getAttribute('url') || '';
                     
+                    const description = node.querySelector('description')?.textContent || '';
                     if (!imageUrl) {
-                        const description = node.querySelector('description')?.textContent || '';
                         const imgMatch = description.match(/<img[^>]*src=["']([^"']*)["']/i);
                         if (imgMatch) imageUrl = imgMatch[1];
                     }
+
+                    const contentEncoded = (node.querySelector('content\\:encoded') || 
+                                           node.getElementsByTagName('content:encoded')[0])?.textContent || '';
 
                     items.push({
                         title: this.sanitizeText(node.querySelector('title')?.textContent || 'Untitled'),
                         url: this.sanitizeUrl(node.querySelector('link')?.textContent || ''),
                         date: node.querySelector('pubDate')?.textContent || '',
-                        image: this.sanitizeUrl(imageUrl)
+                        image: this.sanitizeUrl(imageUrl),
+                        snippet: this.sanitizeText(description || contentEncoded)
                     });
                 });
                 return items;
@@ -259,10 +265,11 @@ export class DiscoveryModule {
             if (atomEntries.length > 0) {
                 atomEntries.forEach(node => {
                     let imageUrl = node.querySelector('link[rel="enclosure"][type^="image/"]')?.getAttribute('href') || 
-                                   node.querySelector('media\\:content')?.getAttribute('url') || '';
+                                   (node.querySelector('media\\:content') || 
+                                    node.getElementsByTagName('media:content')[0])?.getAttribute('url') || '';
                     
+                    const content = node.querySelector('content, summary')?.textContent || '';
                     if (!imageUrl) {
-                        const content = node.querySelector('content, summary')?.textContent || '';
                         const imgMatch = content.match(/<img[^>]*src=["']([^"']*)["']/i);
                         if (imgMatch) imageUrl = imgMatch[1];
                     }
@@ -271,7 +278,8 @@ export class DiscoveryModule {
                         title: this.sanitizeText(node.querySelector('title')?.textContent || 'Untitled'),
                         url: this.sanitizeUrl(node.querySelector('link')?.getAttribute('href') || ''),
                         date: node.querySelector('updated, published')?.textContent || '',
-                        image: this.sanitizeUrl(imageUrl)
+                        image: this.sanitizeUrl(imageUrl),
+                        snippet: this.sanitizeText(content)
                     });
                 });
                 return items;
@@ -293,11 +301,14 @@ export class DiscoveryModule {
                 let rawImage = content.match(/<(media:content|enclosure)[^>]*url=["']([^"']*)["']/i)?.[2] || 
                             content.match(/<img[^>]*src=["']([^"']*)["']/i)?.[1] || '';
                 
+                const rawSnippet = content.match(/<(description|summary|content|content:encoded)[^>]*>([\s\S]*?)<\/\1>/i)?.[2] || '';
+
                 items.push({ 
                     title: this.sanitizeText(rawTitle), 
                     url: this.sanitizeUrl(rawLink.trim()), 
                     date,
-                    image: this.sanitizeUrl(rawImage)
+                    image: this.sanitizeUrl(rawImage),
+                    snippet: this.sanitizeText(rawSnippet)
                 });
             }
             return items;

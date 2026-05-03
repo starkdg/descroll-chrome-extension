@@ -1,6 +1,7 @@
 import { DiscoveryModule } from './discovery.js';
 import { SubscriptionManager } from './subscription.js';
 import { Telemetry } from './telemetry.js';
+import { applyTheme } from './view.js';
 
 // Default values
 const DEFAULTS = {
@@ -12,17 +13,6 @@ const DEFAULTS = {
     enableTelemetry: true,
     theme: 'system'
 };
-
-/**
- * Applies the theme to the current document.
- */
-function applyTheme(theme) {
-    if (theme === 'light' || theme === 'dark') {
-        document.documentElement.setAttribute('data-theme', theme);
-    } else {
-        document.documentElement.removeAttribute('data-theme');
-    }
-}
 
 /**
  * Loads and displays the diagnostic logs.
@@ -123,8 +113,8 @@ async function saveOptions() {
                 // Session storage might not be available in all contexts, ignore
             }
             
-            // Trigger discovery for the new folder
-            chrome.runtime.sendMessage({ action: 'triggerDiscovery' });
+            // Trigger discovery for the new folder, forcing it since settings changed
+            chrome.runtime.sendMessage({ action: 'triggerDiscovery', force: true });
         }
 
         const status = document.getElementById('status');
@@ -155,6 +145,12 @@ function restoreOptions() {
         document.getElementById('enableTelemetry').checked = items.enableTelemetry;
         document.getElementById('theme').value = items.theme;
         
+        // Set support link
+        const supportLink = document.getElementById('supportLink');
+        if (supportLink) {
+            supportLink.href = `https://chromewebstore.google.com/detail/${chrome.runtime.id}/support`;
+        }
+
         applyTheme(items.theme);
         initSubscriptionUI();
         loadLogs();

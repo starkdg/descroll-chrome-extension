@@ -2,19 +2,27 @@ import { DiscoveryModule } from './discovery.js';
 import { StorageManager } from './storage.js';
 import { SubscriptionManager } from './subscription.js';
 import { Telemetry } from './telemetry.js';
+import { findFolderByName, flattenBookmarksWithIds as flattenBookmarks } from './utils.js';
 
 const discovery = new DiscoveryModule();
 const FREE_DOMAIN_LIMIT = 15;
 
 let currentDiscoveryPromise = null;
+let lastDiscoveryTime = 0;
+const DISCOVERY_DEBOUNCE_MS = 1000 * 60 * 5; // 5 minutes
 
 /**
  * Run discovery on bookmarks in the user-configured folder.
  */
-async function discoverAllBookmarks() {
+async function discoverAllBookmarks(force = false) {
     if (currentDiscoveryPromise) {
         console.log("Discovery already in progress, waiting for existing process...");
         return currentDiscoveryPromise;
+    }
+
+    if (!force && Date.now() - lastDiscoveryTime < DISCOVERY_DEBOUNCE_MS) {
+        console.log("Discovery skipped: recently completed.");
+        return { status: 'complete', cached: true };
     }
 
     currentDiscoveryPromise = (async () => {
@@ -24,14 +32,15 @@ async function discoverAllBookmarks() {
             const folderName = settings.folderName;
             const deepScanEnabled = isPro && settings.deepScan;
 
-            console.log(`Starting '${folderName}' discovery (Pro: ${isPro}, DeepScan: ${deepScanEnabled})...`);
+            console.log(`Starting '${folderName}' discovery (Pro: ${isPro}, DeepScan: ${deepScanEnabled}, Force: ${force})...`);
             Telemetry.debug(`Discovery started`, `folder: ${folderName}, pro: ${isPro}`);
             const tree = await chrome.bookmarks.getTree();
-            const myFeedFolder = findFolderByName(tree, folderName);
+            let myFeedFolder = findFolderByName(tree, folderName);
 
             if (!myFeedFolder) {
-                console.log(`No '${folderName}' folder found.`);
-                return { status: 'folder_not_found', folderName };
+                myFeedFolder = await chrome.bookmarks.create({ title: folderName });
+                console.log(`No '${folderName}' folder found. Creating one.`);
+                return { status: 'folder_empty', folderName };
             }
 
             let bookmarks = flattenBookmarks([myFeedFolder]);
@@ -67,26 +76,31 @@ async function discoverAllBookmarks() {
 
             const discoveryResults = await Promise.all(discoveryPromises);
 
-            // 3. Apply all updates at once in a single atomic lock
+            // 3. Apply all updates at once in a single atomic lock.
             await StorageManager.atomicUpdate(
                 StorageManager.DISCOVERED_FEEDS_LOCK,
                 'discoveredFeeds',
                 (currentFeedMap) => {
                     const map = currentFeedMap || {};
+                    let changed = false;
+                    
                     discoveryResults.forEach(res => {
-                        if (res) {
-                            if (res.result) {
+                        if (res && res.result) {
+                            if (!map[res.domain]) {
                                 map[res.domain] = res.result;
                                 discoveryCount++;
-                            } else if (res.existing) {
-                                discoveryCount++;
+                                changed = true;
                             }
+                        } else if (res && res.existing) {
+                            discoveryCount++;
                         }
                     });
-                    return map;
+
+                    return changed ? map : undefined;
                 }
             );
 
+            lastDiscoveryTime = Date.now();
             console.log(`'${folderName}' discovery complete. Found ${discoveryCount} feeds.`);
             Telemetry.logEvent('discovery_complete', { count: discoveryCount });
             Telemetry.debug(`Discovery complete`, `found: ${discoveryCount}`);
@@ -102,99 +116,197 @@ async function discoverAllBookmarks() {
     return currentDiscoveryPromise;
 }
 
-function findFolderByName(nodes, name) {
-    for (const node of nodes) {
-        if (node.title === name && !node.url) return node;
-        if (node.children) {
-            const found = findFolderByName(node.children, name);
-            if (found) return found;
-        }
-    }
-    return null;
-}
+/**
+ * Onboard a new user by setting up the bookmark folder and triggering discovery.
+ */
+async function onboardUser(folderName) {
+    try {
+        await chrome.storage.local.set({ folderName: folderName });
+        const isCustom = folderName !== 'MyFeed';
+        Telemetry.logEvent('onboarding_start', { is_custom: isCustom });
 
-function flattenBookmarks(nodes, list = []) {
-    for (const node of nodes) {
-        if (node.url) {
-            try {
-                const url = new URL(node.url);
-                if (url.protocol.startsWith('http')) {
-                    list.push({
-                        url: node.url,
-                        domain: url.hostname
-                    });
-                }
-            } catch (e) {}
+        // Check if folder exists, if not, create it with starter bookmarks
+        const tree = await chrome.bookmarks.getTree();
+        const existingFolder = findFolderByName(tree, folderName);
+
+        if (!existingFolder) {
+            console.log(`Folder "${folderName}" not found. Creating it with starter content...`);
+            const newFolder = await chrome.bookmarks.create({ title: folderName });
+	    
+            // Add some high-quality starter bookmarks to the new folder
+            const starters = [
+                { title: 'Colossal (Art & Culture)', url: 'https://www.thisiscolossal.com/' },
+		{ title: 'Popular Science', url: 'https://popsci.com/'},
+		{ title: 'Study Finds', url: 'https://studyfinds.com/'},
+		{ title: 'Daily Caller', url: 'https://dailycaller.com/'},
+		{ title: 'CBS News', url: 'https://cbsnews.com/'},
+            ];
+
+            for (const s of starters) {
+                await chrome.bookmarks.create({ parentId: newFolder.id, title: s.title, url: s.url });
+            }
         }
-        if (node.children) flattenBookmarks(node.children, list);
+
+        // Trigger discovery after setup
+        return await discoverAllBookmarks(true); // Force discovery on onboarding
+    } catch (error) {
+        console.error("Onboarding failed:", error);
+        return { status: 'error', message: error.message };
     }
-    return list;
 }
 
 // 1. On Message (e.g., from onboarding)
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'triggerDiscovery') {
         console.log("Discovery triggered via message.");
-        discoverAllBookmarks().then((result) => {
+        discoverAllBookmarks(message.force || false).then((result) => {
             sendResponse(result);
         });
         return true; // Keep channel open for async response
+    } else if (message.action === 'onboardUser') {
+        console.log("Onboarding triggered via message.");
+        onboardUser(message.folderName).then((result) => {
+            sendResponse(result);
+        });
+        return true;
     }
 });
 
 // 2. On New Bookmark Added
 chrome.bookmarks.onCreated.addListener(async (id, bookmark) => {
-    // Get the configured folder name
-    const settings = await chrome.storage.local.get({ folderName: 'MyFeed' });
-    const folderName = settings.folderName;
+    handleBookmarkChange(bookmark.parentId, bookmark.url);
+});
 
-    // Check if the bookmark is in the configured folder
-    const parent = await chrome.bookmarks.get(bookmark.parentId);
-    if (!parent || parent[0].title !== folderName) {
-        console.log(`Bookmark added, but not in '${folderName}' folder. Skipping discovery.`);
-        return;
+// 3. On Bookmark Removed
+chrome.bookmarks.onRemoved.addListener(async (id, removeInfo) => {
+    handleBookmarkRemoval(removeInfo.parentId);
+});
+
+// 4. On Bookmark Moved (e.g. into the feed folder)
+chrome.bookmarks.onMoved.addListener(async (id, moveInfo) => {
+    try {
+        const bookmark = await chrome.bookmarks.get(id);
+        // Check both old and new parents
+        await handleBookmarkRemoval(moveInfo.oldParentId);
+        await handleBookmarkChange(moveInfo.parentId, bookmark[0].url);
+    } catch (e) {
+        console.error("Error processing bookmark move:", e);
     }
+});
 
-    console.log(`New '${folderName}' bookmark detected: ${bookmark.url}`);
-    if (bookmark.url) {
+// 5. On Bookmark Changed (e.g. URL update)
+chrome.bookmarks.onChanged.addListener(async (id, changeInfo) => {
+    if (changeInfo.url) {
         try {
-            const domain = new URL(bookmark.url).hostname;
-            const res = await chrome.storage.local.get('discoveredFeeds');
-            const currentFeedMap = res.discoveredFeeds || {};
-
-            if (!currentFeedMap[domain]) {
-                const isPro = await SubscriptionManager.isPro();
-                const currentCount = Object.keys(currentFeedMap).length;
-
-                if (!isPro && currentCount >= FREE_DOMAIN_LIMIT) {
-                    console.log(`Free limit of ${FREE_DOMAIN_LIMIT} domains reached. Skipping discovery for ${domain}.`);
-                    return;
-                }
-
-                console.log(`Starting discovery for new domain: ${domain} (Pro: ${isPro})`);
-                Telemetry.debug(`New domain discovery`, `domain: ${domain}`);
-                const settings = await chrome.storage.local.get({ deepScan: false });
-                const result = await discovery.discover(bookmark.url, { deepScan: isPro && settings.deepScan });
-                if (result && (result.feeds.length > 0 || result.sitemaps.length > 0)) {
-                    console.log(`Successfully discovered ${result.feeds.length} feeds for ${domain}`);
-                    
-                    await StorageManager.atomicUpdate(
-                        StorageManager.DISCOVERED_FEEDS_LOCK,
-                        'discoveredFeeds',
-                        (feedMap) => {
-                            const map = feedMap || {};
-                            map[domain] = result;
-                            return map;
-                        }
-                    );
-                } else {
-                    console.log(`No feeds found for new domain: ${domain}`);
-                }
-            } else {
-                console.log(`Domain ${domain} already exists in discovery map.`);
-            }
+            const bookmark = await chrome.bookmarks.get(id);
+            await handleBookmarkChange(bookmark[0].parentId, changeInfo.url);
         } catch (e) {
-            console.error("Error processing new bookmark:", e);
+            console.error("Error processing bookmark change:", e);
         }
     }
 });
+
+/**
+ * Shared logic for bookmark additions or updates.
+ */
+async function handleBookmarkChange(parentId, url) {
+    if (currentDiscoveryPromise) {
+        await currentDiscoveryPromise;
+    }
+
+    const settings = await chrome.storage.local.get({ folderName: 'MyFeed' });
+    const folderName = settings.folderName;
+
+    try {
+        const parent = await chrome.bookmarks.get(parentId);
+        if (!parent || parent[0].title !== folderName) return;
+
+        console.log(`Bookmark change in '${folderName}' detected: ${url}`);
+        if (url) {
+            const domain = new URL(url).hostname;
+            
+            await StorageManager.atomicUpdate(
+                StorageManager.DISCOVERED_FEEDS_LOCK,
+                'discoveredFeeds',
+                async (currentFeedMap) => {
+                    const map = currentFeedMap || {};
+                    if (map[domain]) return undefined;
+
+                    const isPro = await SubscriptionManager.isPro();
+                    const currentCount = Object.keys(map).length;
+
+                    if (!isPro && currentCount >= FREE_DOMAIN_LIMIT) {
+                        console.log(`Free limit of ${FREE_DOMAIN_LIMIT} domains reached.`);
+                        return undefined;
+                    }
+
+                    console.log(`Starting discovery for new domain: ${domain}`);
+                    const settings = await chrome.storage.local.get({ deepScan: false });
+                    const result = await discovery.discover(url, { deepScan: isPro && settings.deepScan });
+                    
+                    if (result && (result.feeds.length > 0 || result.sitemaps.length > 0)) {
+                        map[domain] = result;
+                        return map;
+                    }
+                    return undefined;
+                }
+            );
+        }
+    } catch (e) {
+        console.error("Error in handleBookmarkChange:", e);
+    }
+}
+
+/**
+ * Shared logic for bookmark removals or moves out of the folder.
+ */
+async function handleBookmarkRemoval(parentId) {
+    const settings = await chrome.storage.local.get({ folderName: 'MyFeed' });
+    const folderName = settings.folderName;
+
+    try {
+        const parent = await chrome.bookmarks.get(parentId);
+        if (!parent || parent[0].title !== folderName) return;
+
+        const tree = await chrome.bookmarks.getTree();
+        const folder = findFolderByName(tree, folderName);
+        if (!folder) return;
+
+        const remainingBookmarks = flattenBookmarks([folder]);
+        const domainsInFolder = new Set(remainingBookmarks.map(bm => bm.domain));
+
+        await StorageManager.atomicUpdate(
+            StorageManager.DISCOVERED_FEEDS_LOCK,
+            'discoveredFeeds',
+            (feedMap) => {
+                const map = feedMap || {};
+                let changed = false;
+                for (const domain in map) {
+                    if (!domainsInFolder.has(domain)) {
+                        console.log(`Removing domain ${domain} from discovery map.`);
+                        delete map[domain];
+                        changed = true;
+                    }
+                }
+                return changed ? map : undefined;
+            }
+        );
+    } catch (e) {
+        console.error("Error in handleBookmarkRemoval:", e);
+    }
+}
+
+// Perform a background sync on startup or install to ensure consistency
+chrome.runtime.onInstalled.addListener(() => {
+    console.log("DeScroll installed/updated. Triggering initial discovery...");
+    discoverAllBookmarks();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+    console.log("Browser started. Triggering background discovery sync...");
+    discoverAllBookmarks();
+});
+
+// Trigger discovery on service worker wake-up (if not recently run)
+discoverAllBookmarks();
+

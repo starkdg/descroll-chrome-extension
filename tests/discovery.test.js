@@ -66,6 +66,66 @@ describe('DiscoveryModule', () => {
         });
     });
 
+    describe('Feed Content Extraction (parseFeed)', () => {
+        it('should extract items with snippets from RSS 2.0', async () => {
+            const rssXml = `
+                <rss version="2.0">
+                    <channel>
+                        <item>
+                            <title>RSS Item</title>
+                            <link>https://example.com/item1</link>
+                            <description>RSS description text.</description>
+                            <pubDate>Mon, 01 Jan 2024 00:00:00 GMT</pubDate>
+                        </item>
+                    </channel>
+                </rss>
+            `;
+            vi.spyOn(discovery, 'fetchWithTimeout').mockResolvedValue(rssXml);
+            
+            const items = await discovery.parseFeed('https://example.com/rss.xml');
+            expect(items).toHaveLength(1);
+            expect(items[0].title).toBe('RSS Item');
+            expect(items[0].snippet).toBe('RSS description text.');
+        });
+
+        it('should extract items with snippets from Atom', async () => {
+            const atomXml = `
+                <feed xmlns="http://www.w3.org/2005/Atom">
+                    <entry>
+                        <title>Atom Item</title>
+                        <link href="https://example.com/item1"/>
+                        <summary>Atom summary text.</summary>
+                        <updated>2024-01-01T00:00:00Z</updated>
+                    </entry>
+                </feed>
+            `;
+            vi.spyOn(discovery, 'fetchWithTimeout').mockResolvedValue(atomXml);
+            
+            const items = await discovery.parseFeed('https://example.com/atom.xml');
+            expect(items).toHaveLength(1);
+            expect(items[0].title).toBe('Atom Item');
+            expect(items[0].snippet).toBe('Atom summary text.');
+        });
+
+        it('should fallback to content:encoded or content if description/summary is missing', async () => {
+            const mixedXml = `
+                <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+                    <item>
+                        <title>Encoded Item</title>
+                        <link>https://example.com/item2</link>
+                        <content:encoded>Encoded content.</content:encoded>
+                    </item>
+                </rss>
+            `;
+            // Note: in jsdom/xml, content:encoded might need special handling as seen in discovery.js
+            vi.spyOn(discovery, 'fetchWithTimeout').mockResolvedValue(mixedXml);
+            
+            const items = await discovery.parseFeed('https://example.com/rss.xml');
+            expect(items).toHaveLength(1);
+            expect(items[0].snippet).toBe('Encoded content.');
+        });
+    });
+
     describe('Robots.txt Parsing', () => {
         it('should extract sitemaps from robots.txt content', () => {
             const robots = `
