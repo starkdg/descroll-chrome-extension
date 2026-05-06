@@ -5,6 +5,7 @@ import { SubscriptionManager } from './subscription.js';
 import { FeedView, applyTheme } from './view.js';
 import { shuffleArray, findFolderByName, flattenBookmarksWithIds } from './utils.js';
 import { Telemetry } from './telemetry.js';
+import { AnalogClock } from './clock.js';
 
 const FREE_DOMAIN_LIMIT = 15;
 
@@ -13,6 +14,7 @@ class DeScrollApp {
         this.view = new FeedView();
         this.discovery = new DiscoveryModule();
         this.seenManager = new SeenContentManager();
+        this.clock = new AnalogClock();
         this.allItems = [];
         this.currentIndex = 0;
         this.BATCH_SIZE = 5;
@@ -123,15 +125,22 @@ class DeScrollApp {
 	
         Telemetry.logEvent('feed_init');
         
-        // Restore shared session pool if it exists
-        await this.loadFeed(false);
-        
-        if (this.allItems.length > 0) {
-            console.log("DeScroll: Restoring shared session feed.");
-            this.renderFullFeed();
+        const isRefresh = performance.getEntriesByType('navigation')[0]?.type === 'reload';
+
+        if (isRefresh) {
+            console.log("DeScroll: Page refresh detected, forcing new content.");
+            await this.refreshFeed(true);
         } else {
-            // First run or cache expired
-            await this.refreshFeed();
+            // Restore shared session pool if it exists
+            await this.loadFeed(false);
+            
+            if (this.allItems.length > 0) {
+                console.log("DeScroll: Restoring shared session feed.");
+                this.renderFullFeed();
+            } else {
+                // First run or cache expired
+                await this.refreshFeed();
+            }
         }
     }
 

@@ -600,6 +600,65 @@ img.fallback-active {
     z-index: 1000;
 }
 
+/* Analog Clock Widget - Army Field Watch Realism */
+.side-widget-area {
+    position: fixed;
+    top: 40px;
+    left: 40px;
+    width: 150px;
+    z-index: 100;
+    transition: opacity 0.3s ease;
+}
+
+@media (max-width: 1200px) {
+    .side-widget-area {
+        display: none;
+    }
+}
+
+.clock-widget {
+    width: 100%;
+    aspect-ratio: 1;
+    position: relative;
+}
+
+.clock-svg {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    box-shadow: 
+        0 15px 35px rgba(0,0,0,0.6),
+        inset 0 2px 5px rgba(255,255,255,0.05);
+}
+
+/* Matte Crystal Effect */
+.clock-widget::after {
+    content: '';
+    position: absolute;
+    top: 3%;
+    left: 3%;
+    width: 94%;
+    height: 94%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.hand-sword {
+    transform-origin: 50% 50%;
+    transition: transform 0.3s cubic-bezier(0.4, 2.3, 0.6, 1);
+}
+
+.sec-hand {
+    transform-origin: 50% 50%;
+    /* No transition for second hand to allow continuous JS animation */
+}
+
+.markers-group text {
+    user-select: none;
+    pointer-events: none;
+}
+
 .nav-link, .dev-link {
     color: #bdc3c7;
     text-decoration: none;
