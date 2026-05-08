@@ -15,6 +15,12 @@ const DISCOVERY_DEBOUNCE_MS = 1000 * 60 * 5; // 5 minutes
  * Run discovery on bookmarks in the user-configured folder.
  */
 async function discoverAllBookmarks(force = false) {
+    const { onboardingComplete } = await chrome.storage.local.get({ onboardingComplete: false });
+    if (!onboardingComplete && !force) {
+        console.log("Discovery skipped: Onboarding not complete.");
+        return { status: 'onboarding_pending' };
+    }
+
     if (currentDiscoveryPromise) {
         console.log("Discovery already in progress, waiting for existing process...");
         return currentDiscoveryPromise;

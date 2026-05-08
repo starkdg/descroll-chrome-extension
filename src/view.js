@@ -37,7 +37,7 @@ export class FeedView {
 		    this.cardObserver.unobserve(entry.target);
 		}
 	    });
-	}, { threshold: 0.9 });
+	}, { threshold: 0.5 });
 
 	// Global listener to close menus
         document.addEventListener('click', () => this.closeAllMenus());

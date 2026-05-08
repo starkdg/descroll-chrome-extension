@@ -7,13 +7,33 @@ describe('SeenContentManager', () => {
     // Mock chrome.storage.local
     const mockStorage = {
         get: vi.fn(),
-        set: vi.fn()
+        set: vi.fn(),
+        onChanged: {
+            addListener: vi.fn(),
+            removeListener: vi.fn()
+        }
     };
 
     beforeEach(() => {
-        vi.stubGlobal('chrome', { storage: { local: mockStorage } });
+        vi.stubGlobal('chrome', { storage: { local: mockStorage, onChanged: mockStorage.onChanged } });
         vi.useFakeTimers();
         seenManager = new SeenContentManager(7);
+    });
+
+    it('should synchronize cache when storage changes (cross-tab sync)', async () => {
+        // Find the listener that was added
+        const listener = mockStorage.onChanged.addListener.mock.calls[0][0];
+        expect(listener).toBeDefined();
+
+        const newSeenData = { 'https://newly-seen.com': Date.now() };
+        
+        // Simulate a storage change event from another tab
+        listener({
+            seenUrls: { newValue: newSeenData }
+        }, 'local');
+
+        expect(seenManager.cache).toEqual(newSeenData);
+        expect(await seenManager.peek('https://newly-seen.com')).toBe(true);
     });
 
     it('should return correct windowMs', async () => {

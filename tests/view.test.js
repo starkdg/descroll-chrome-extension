@@ -44,6 +44,13 @@ describe('FeedView', () => {
             expect(view.onboarding).not.toBeNull();
             expect(view.app).not.toBeNull();
         });
+
+        it('should initialize cardObserver with threshold 0.5', () => {
+            expect(global.IntersectionObserver).toHaveBeenCalledWith(
+                expect.any(Function),
+                expect.objectContaining({ threshold: 0.5 })
+            );
+        });
     });
 
     describe('Favicon and Title', () => {

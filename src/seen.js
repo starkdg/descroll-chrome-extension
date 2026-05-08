@@ -9,6 +9,13 @@ export class SeenContentManager {
         this.settingsKey = 'seenSettings';
         this.cache = null; // In-memory cache for the current tab session
         this.saveTimeout = null; // Timer for debouncing writes
+
+        // Synchronize cache across tabs when storage changes
+        chrome.storage.onChanged.addListener((changes, areaName) => {
+            if (areaName === 'local' && changes[this.storageKey]) {
+                this.cache = changes[this.storageKey].newValue;
+            }
+        });
     }
 
     /**

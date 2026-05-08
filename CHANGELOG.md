@@ -25,3 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Various accessibility (a11y) improvements, ensuring keyboard navigability and proper contrast.
+
+
+## [1.0.6] - 2026-05-06
+
+### Added 
+- **Analog Clock** added clock.js to display a clock on the newtab.html p age
