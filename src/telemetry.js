@@ -13,6 +13,7 @@ export class Telemetry {
 
         try {
             const clientId = await this.getOrCreateClientId();
+            const sessionId = await this.getOrCreateSessionId();
             
             const payload = {
                 client_id: clientId,
@@ -20,16 +21,21 @@ export class Telemetry {
                     name: name,
                     params: {
                         ...params,
+                        session_id: sessionId,
                         engagement_time_msec: 1, // Required by GA4
                     }
                 }]
             };
 
             // Use fetch to send the ping - no external scripts required
-            await fetch(`${GA_ENDPOINT}?measurement_id=${CONFIG.GA_MEASUREMENT_ID}&api_secret=${CONFIG.GA_API_SECRET}`, {
+            const response = await fetch(`${GA_ENDPOINT}?measurement_id=${CONFIG.GA_MEASUREMENT_ID}&api_secret=${CONFIG.GA_API_SECRET}`, {
                 method: 'POST',
                 body: JSON.stringify(payload)
             });
+
+            if (!response.ok) {
+                this.debug('GA4 ping status error', response.status);
+            }
         } catch (e) {
             // Silently fail GA4 pings to avoid interrupting the user
             this.debug('GA4 ping failed', e.message);
@@ -75,6 +81,22 @@ export class Telemetry {
         const newId = this.generateUUID();
         await chrome.storage.local.set({ clientId: newId });
         return newId;
+    }
+
+    /**
+     * Gets or creates a session ID stored in session storage.
+     */
+    static async getOrCreateSessionId() {
+        try {
+            const result = await chrome.storage.session.get('sessionId');
+            if (result.sessionId) return result.sessionId;
+
+            const newId = Date.now().toString();
+            await chrome.storage.session.set({ sessionId: newId });
+            return newId;
+        } catch (e) {
+            return 'fallback-' + Date.now();
+        }
     }
 
     static generateUUID() {

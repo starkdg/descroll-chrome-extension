@@ -27,6 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Various accessibility (a11y) improvements, ensuring keyboard navigability and proper contrast.
 
 
+## [1.0.8] - 2026-05-09
+
+### Fixed
+- **Telemetry:** Implemented session-aware tracking to resolve "zero active user" reporting in GA4.
+- **Permissions:** Added explicit host permissions for Google Analytics to ensure reliable event delivery.
+- **Diagnostics:** Enhanced discovery events with granular metadata to better diagnose user onboarding drop-off.
+
+## [1.0.7] - 2026-05-08
+
+### Changed
+- Minor internal optimizations and dependency updates.
+
 ## [1.0.6] - 2026-05-06
 
 ### Added 

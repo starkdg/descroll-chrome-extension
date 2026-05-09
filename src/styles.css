@@ -94,6 +94,22 @@ body {
     margin-top: 1rem;
 }
 
+.permission-notice {
+    font-size: 0.85rem;
+    color: #666;
+    background-color: #fff9c4; /* Light yellow warning background */
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    line-height: 1.4;
+    border-left: 3px solid #fbc02d; /* Yellow accent */
+    text-align: left;
+}
+
+.permission-notice strong {
+    color: #000;
+}
+
 .onboarding-hint {
     font-size: 0.85rem;
     color: #7f8c8d;

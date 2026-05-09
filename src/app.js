@@ -86,6 +86,7 @@ class DeScrollApp {
     }
 
     async init() {
+        const startTime = performance.now();
         console.log("Initializing DeScroll...");
         this.view.setFavicon();
 
@@ -142,6 +143,13 @@ class DeScrollApp {
                 await this.refreshFeed();
             }
         }
+
+        const loadTime = Math.round(performance.now() - startTime);
+        Telemetry.logEvent('page_load_performance', { 
+            load_time_ms: loadTime,
+            item_count: this.allItems.length,
+            is_refresh: isRefresh
+        });
     }
 
     async handleStartOnboarding(folderName) {

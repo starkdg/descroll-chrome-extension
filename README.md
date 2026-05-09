@@ -1,7 +1,7 @@
 # DeScroll Chrome Extension
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-1.0.8-blue.svg)](package.json)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-orange.svg)](manifest.json)
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Extension-green.svg)](https://chrome.google.com/webstore)
 

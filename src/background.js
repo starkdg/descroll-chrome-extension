@@ -108,7 +108,11 @@ async function discoverAllBookmarks(force = false) {
 
             lastDiscoveryTime = Date.now();
             console.log(`'${folderName}' discovery complete. Found ${discoveryCount} feeds.`);
-            Telemetry.logEvent('discovery_complete', { count: discoveryCount });
+            Telemetry.logEvent('discovery_complete', { 
+                count: discoveryCount,
+                bookmarks: bookmarks.length,
+                is_onboarding: force
+            });
             Telemetry.debug(`Discovery complete`, `found: ${discoveryCount}`);
             return { status: 'complete', folderName, bookmarkCount: bookmarks.length, discoveryCount };
         } catch (error) {

@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "DeScroll",
     "short_name": "DeScroll",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "minimum_chrome_version": "106",
     "description": "Stop doomscrolling. Turn your New Tab page into a beautiful, intentional feed curated from your own favorite bookmarks.",
     "permissions": [
@@ -15,7 +15,8 @@
     },
     "optional_host_permissions": [
 	"<all_urls>",
-	"https://extensionpay.com/*"
+	"https://extensionpay.com/*",
+	"https://www.google-analytics.com/*"
     ],
     "background": {
 	"service_worker": "src/background.js",
